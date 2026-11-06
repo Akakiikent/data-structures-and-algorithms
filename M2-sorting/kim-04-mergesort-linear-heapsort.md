@@ -26,7 +26,7 @@
 
 ## 5. Материалы и ресурсы
 
-- Стартовая заготовка — [`attachments/lab04-mergesort-linear-heapsort-starter.py`](attachments/lab04-mergesort-linear-heapsort-starter.py); окружение — [`requirements.txt`](../requirements.txt).
+- Стартовая заготовка — [`attachments/lab04-mergesort-linear-heapsort-starter.py`](attachments/lab04.py); окружение — [`requirements.txt`](../requirements.txt).
 - Генератор массивов с разными распределениями и диапазонами ключей — [`scripts/generate_data.py`](../scripts/generate_data.py).
 - Методика бенчмаркинга — [`docs/reproducibility.md`](../docs/reproducibility.md); методика верификации — [`docs/ai-verification.md`](../docs/ai-verification.md).
 - Реализация QuickSort — из собственной ЛР 3 (КИМ-03).
