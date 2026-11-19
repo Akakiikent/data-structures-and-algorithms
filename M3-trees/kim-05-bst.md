@@ -26,7 +26,7 @@
 
 ## 5. Материалы и ресурсы
 
-- Стартовая заготовка — [`attachments/lab05-bst-starter.py`](attachments/lab05-bst-starter.py); окружение — [`requirements.txt`](../requirements.txt).
+- Стартовая заготовка — [`attachments/lab05-bst-starter.py`](attachments/lab05_bst.py); окружение — [`requirements.txt`](../requirements.txt).
 - Методика бенчмаркинга — [`docs/reproducibility.md`](../docs/reproducibility.md); методика верификации — [`docs/ai-verification.md`](../docs/ai-verification.md).
 - Генерация входных данных по варианту — [`scripts/generate_data.py`](../scripts/generate_data.py).
 - Лекция 5 «Бинарное дерево поиска, AVL-деревья».
