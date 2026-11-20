@@ -1,17 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""ЛР 5. Бинарное дерево поиска: обходы, вставка и удаление — стартовая заготовка.
 
-Заготовка — это каркас, а не решение: заполните все TODO самостоятельно
-в соответствии с КИМ-05 и правилами использования генеративного ИИ
-(docs/ai-verification.md). Класс BST понадобится повторно в ДЗ 2
-(Cases/kim-02-bst-height-experiment.md) — держите его чистым и переносимым.
+"""ЛР 5. Бинарное дерево поиска: обходы, вставка и удаление.
 
-Запуск: python lab05-bst-starter.py --variant N
 """
 from __future__ import annotations
 
 import argparse
+import math
 import random
 import statistics
 import sys
@@ -39,8 +33,8 @@ class BST:
     """Бинарное дерево поиска без дубликатов ключей.
 
     Инвариант: для каждого узла все ключи левого поддерева меньше key,
-    все ключи правого — больше. Ожидаемая сложность операций: TODO
-    (выразить через высоту h и обосновать в отчёте).
+    все ключи правого — больше. Сложность insert, search и delete
+    равна O(h), где h - высота дерева (на случайных данных h около log n).
     """
 
     def __init__(self) -> None:
@@ -48,13 +42,36 @@ class BST:
 
     def insert(self, key: int) -> None:
         """Вставка ключа; повторная вставка существующего ключа игнорируется."""
-        # TODO: спуск от корня до свободной позиции с сохранением инварианта
-        raise NotImplementedError
+        new_node = Node(key)
+        if self.root is None:
+            self.root = new_node
+            return
+        current = self.root
+        while True:
+            if key == current.key:
+                return
+            elif key < current.key:
+                if current.left is None:
+                    current.left = new_node
+                    return
+                current = current.left
+            else:
+                if current.right is None:
+                    current.right = new_node
+                    return
+                current = current.right
 
     def search(self, key: int) -> bool:
         """Возвращает True, если ключ есть в дереве."""
-        # TODO: спуск от корня со сравнением ключей
-        raise NotImplementedError
+        current = self.root
+        while current is not None:
+            if key == current.key:
+                return True
+            elif key < current.key:
+                current = current.left
+            else:
+                current = current.right
+        return False
 
     def delete(self, key: int) -> None:
         """Удаление ключа. Обработать три случая:
@@ -65,30 +82,86 @@ class BST:
            поддерева) и удалить преемника из правого поддерева.
         Отсутствующий ключ игнорируется.
         """
-        # TODO: реализовать все три случая
-        raise NotImplementedError
+        self.root = self._delete(self.root, key)
+
+    def _delete(self, node, key):
+        """Удаляет key из поддерева node и возвращает новый корень этого поддерева."""
+        if node is None:
+            return None
+        if key < node.key:
+            node.left = self._delete(node.left, key)
+        elif key > node.key:
+            node.right = self._delete(node.right, key)
+        else:
+            if node.left is None and node.right is None:
+                return None
+            if node.left is None:
+                return node.right
+            if node.right is None:
+                return node.left
+            successor = node.right
+            while successor.left is not None:
+                successor = successor.left
+            node.key = successor.key
+            node.right = self._delete(node.right, successor.key)
+        return node
 
     # -- Обходы --------------------------------------------------------------
 
     def in_order(self) -> list[int]:
         """Симметричный обход (лево — узел — право): рекурсивно."""
-        # TODO: для корректного BST результат — возрастающая последовательность
-        raise NotImplementedError
+        result: list[int] = []
+        self._in_order(self.root, result)
+        return result
+
+    def _in_order(self, node, result) -> None:
+        if node is None:
+            return
+        self._in_order(node.left, result)
+        result.append(node.key)
+        self._in_order(node.right, result)
 
     def pre_order(self) -> list[int]:
         """Прямой обход (узел — лево — право): рекурсивно."""
-        # TODO
-        raise NotImplementedError
+        result: list[int] = []
+        self._pre_order(self.root, result)
+        return result
+
+    def _pre_order(self, node, result) -> None:
+        if node is None:
+            return
+        result.append(node.key)
+        self._pre_order(node.left, result)
+        self._pre_order(node.right, result)
 
     def post_order(self) -> list[int]:
         """Обратный обход (лево — право — узел): рекурсивно."""
-        # TODO
-        raise NotImplementedError
+        result: list[int] = []
+        self._post_order(self.root, result)
+        return result
+
+    def _post_order(self, node, result) -> None:
+        if node is None:
+            return
+        self._post_order(node.left, result)
+        self._post_order(node.right, result)
+        result.append(node.key)
 
     def level_order(self) -> list[int]:
         """Обход в ширину по уровням: итеративно через очередь (deque)."""
-        # TODO: использовать collections.deque, без рекурсии
-        raise NotImplementedError
+        result: list[int] = []
+        if self.root is None:
+            return result
+        queue = deque()
+        queue.append(self.root)
+        while queue:
+            node = queue.popleft()
+            result.append(node.key)
+            if node.left is not None:
+                queue.append(node.left)
+            if node.right is not None:
+                queue.append(node.right)
+        return result
 
     # -- Характеристики дерева ----------------------------------------------
 
@@ -97,13 +170,25 @@ class BST:
 
         Пустое дерево имеет высоту -1, дерево из одного узла — 0.
         """
-        # TODO
-        raise NotImplementedError
+        if self.root is None:
+            return -1
+        levels = 0
+        queue = deque()
+        queue.append(self.root)
+        while queue:
+            for _ in range(len(queue)):
+                node = queue.popleft()
+                if node.left is not None:
+                    queue.append(node.left)
+                if node.right is not None:
+                    queue.append(node.right)
+            levels += 1
+        return levels - 1
 
     def size(self) -> int:
         """Число узлов в дереве."""
-        # TODO
-        raise NotImplementedError
+        return len(self.in_order())
+
 
 
 # ---------------------------------------------------------------------------
@@ -137,8 +222,6 @@ def expect_search(tree: BST, key: int, present: bool, where: str) -> None:
 
 TRAVERSALS = ("in_order", "pre_order", "post_order", "level_order")
 
-# Деревья с известными обходами: идеальное дерево 4-2-6-1-3-5-7 (вставка по уровням)
-# и пример лекции 5, где у узлов 10 и 14 по одному ребёнку.
 KNOWN_TREES = {
     (4, 2, 6, 1, 3, 5, 7): {
         "in_order": [1, 2, 3, 4, 5, 6, 7],
@@ -158,9 +241,6 @@ KNOWN_TREES = {
     },
 }
 
-# Удаление узла с двумя детьми: (ключи, удаляемый ключ, pre_order после замены
-# преемником, pre_order после замены предшественником). В последних двух случаях
-# у преемника (предшественника) есть свой ребёнок.
 TWO_CHILDREN_CASES = [
     ((8, 3, 10, 1, 6, 14, 4, 7, 13), 3, [8, 4, 1, 6, 7, 10, 14, 13], [8, 1, 6, 4, 7, 10, 14, 13]),
     ((8, 3, 10, 1, 6, 14, 4, 7, 13), 6, [8, 3, 1, 7, 4, 10, 14, 13], [8, 3, 1, 4, 7, 10, 14, 13]),
@@ -220,7 +300,7 @@ def check_height_size() -> None:
 def check_delete() -> None:
     """Пустое дерево, лист, один ребёнок, корень с двумя детьми, отсутствующий и последний ключ."""
     tree = BST()
-    tree.delete(1)  # удаление из пустого дерева не должно падать
+    tree.delete(1)
     got = tree.in_order()
     expect(got == [], f"delete(1) из пустого дерева: in_order() = {got}")
 
@@ -275,7 +355,6 @@ def check_against_reference() -> None:
                 tree.delete(k)
                 etalon.discard(k)
                 op = f"delete({k})"
-            # Инвариант BST: in-order даёт строго возрастающую последовательность ключей
             got = tree.in_order()
             expect(got == sorted(etalon), f"прогон {run}, команда №{step} {op}: "
                                           f"in_order() = {got}, эталон {sorted(etalon)}")
@@ -294,6 +373,37 @@ def check_against_reference() -> None:
                f"{where}: height() = {got} при {n} узлах, возможно от {low} до {high}")
 
 
+def is_bst(node, low, high) -> bool:
+    """Рекурсивная проверка инварианта: все ключи узла лежат строго между low и high."""
+    if node is None:
+        return True
+    if low is not None and node.key <= low:
+        return False
+    if high is not None and node.key >= high:
+        return False
+    return is_bst(node.left, low, node.key) and is_bst(node.right, node.key, high)
+
+
+def check_invariant_bounds() -> None:
+    """Собственная проверка: инвариант с границами после КАЖДОЙ операции insert/delete."""
+    rng = random.Random(1)
+    for run in range(1, 51):
+        tree = BST()
+        for step in range(1, 61):
+            k = rng.randint(-20, 20)
+            if rng.random() < 0.55:
+                tree.insert(k)
+                op = f"insert({k})"
+            else:
+                tree.delete(k)
+                op = f"delete({k})"
+            expect(is_bst(tree.root, None, None),
+                   f"прогон {run}, команда №{step} {op}: нарушен инвариант BST")
+            # size() должен совпадать с длиной обхода в ширину
+            expect(tree.size() == len(tree.level_order()),
+                   f"прогон {run}, команда №{step} {op}: size() не равен длине level_order()")
+
+
 def self_check() -> None:
     """Все проверки по разделам; при любой ошибке замеры не выполняются."""
     checks = (
@@ -303,6 +413,7 @@ def self_check() -> None:
         ("удаление", check_delete),
         ("удаление узла с двумя детьми", check_delete_two_children),
         ("сверка с эталоном set/sorted", check_against_reference),
+        ("инвариант BST с границами (своя проверка)", check_invariant_bounds),
     )
     failed = 0
     print("self_check:")
@@ -316,14 +427,12 @@ def self_check() -> None:
         except SelfCheckError as err:
             print(f"  {name}: ОШИБКА — {err}")
             failed += 1
-        except Exception:  # noqa: BLE001 — падение реализации тоже результат проверки
+        except Exception:
             print(f"  {name}: ИСКЛЮЧЕНИЕ")
             traceback.print_exc(file=sys.stdout)
             failed += 1
         else:
             print(f"  {name}: OK")
-    # TODO: добавить собственные проверки (например, инвариант BST после каждой
-    #       операции рекурсивной проверкой с границами) и описать их в отчёте.
     if failed:
         raise SystemExit(f"self_check: не пройдено разделов — {failed}; "
                          f"замеры выполняются только после всех проверок.")
@@ -336,12 +445,12 @@ def self_check() -> None:
 
 SIZES = [1_000, 3_000, 10_000, 30_000, 100_000]
 REPEATS = 5
-QUERIES = 1_000  # число поисков на один замер
+QUERIES = 1_000
 
 
 def bench(fn) -> float:
     """Медиана времени выполнения fn() по REPEATS запускам, с прогревом."""
-    fn()  # прогрев — не учитывается
+    fn()
     times = []
     for _ in range(REPEATS):
         t0 = time.perf_counter()
@@ -350,12 +459,13 @@ def bench(fn) -> float:
     return statistics.median(times)
 
 
-def run_benchmarks(seed: int) -> None:
+def run_benchmarks(seed: int) -> list:
     """Сравнение времени QUERIES поисков в BST и в списке (оператор in)."""
     rng = random.Random(seed)
+    rows = []
     print(f"{'n':>8} {'h(BST)':>7} {'t_bst, c':>10} {'t_list, c':>10}")
     for n in SIZES:
-        keys = rng.sample(range(10 * n), n)   # случайные ключи без повторов
+        keys = rng.sample(range(10 * n), n)
         queries = [rng.randint(0, 10 * n) for _ in range(QUERIES)]
         tree = BST()
         for k in keys:
@@ -367,24 +477,47 @@ def run_benchmarks(seed: int) -> None:
 
         def search_list() -> None:
             for q in queries:
-                q in keys  # линейный поиск для сравнения
+                q in keys
 
-        print(f"{n:>8} {tree.height():>7} "
-              f"{bench(search_bst):>10.6f} {bench(search_list):>10.6f}")
-    # TODO: оформить результаты таблицей/графиком в отчёте;
-    # TODO: сопоставить рост t_bst с высотой дерева, а t_list — с n;
-    # TODO: в отчёте объяснить деградацию BST на упорядоченных ключах
-    #       и гарантию высоты AVL-дерева (не более 1,44*log2(n)) — мостик к ДЗ 2.
+        t_bst = bench(search_bst)
+        t_list = bench(search_list)
+        rows.append((n, tree.height(), t_bst, t_list))
+        print(f"{n:>8} {tree.height():>7} {t_bst:>10.6f} {t_list:>10.6f}")
+    return rows
+
+
+def run_sorted_experiment(seed: int) -> list:
+    """Дополнительно: высота и время поиска, если вставлять ключи по возрастанию."""
+    rng = random.Random(seed)
+    rows = []
+    print()
+    print("Упорядоченные ключи (вырожденное дерево), n небольшие из-за рекурсивных обходов:")
+    print(f"{'n':>8} {'h(BST)':>7} {'t_bst, c':>10} {'1,44*log2(n)':>13}")
+    for n in [100, 200, 400, 800]:
+        tree = BST()
+        for k in range(n):
+            tree.insert(k)
+        queries = [rng.randrange(n) for _ in range(QUERIES)]
+
+        def search_bst() -> None:
+            for q in queries:
+                tree.search(q)
+
+        t_bst = bench(search_bst)
+        rows.append((n, tree.height(), t_bst))
+        print(f"{n:>8} {tree.height():>7} {t_bst:>10.6f} {1.44 * math.log2(n):>13.1f}")
+    return rows
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--variant", type=int, required=True, help="номер варианта")
     args = ap.parse_args()
-    seed = 30 + args.variant  # seed по варианту — см. docs/reproducibility.md
+    seed = 30 + args.variant
     random.seed(seed)
     self_check()
     run_benchmarks(seed)
+    run_sorted_experiment(seed)
 
 
 if __name__ == "__main__":
